@@ -4,13 +4,13 @@ import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstati
 import { signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 // Firebase Config
 const firebaseConfig = {
-    apiKey: "AIzaSyD_KX75jv1sX0JkGRWZjjstSLVzJ04m-Ys",
-    authDomain: "golden-context-416014.firebaseapp.com",
-    projectId: "golden-context-416014",
-    storageBucket: "golden-context-416014.firebasestorage.app",
-    messagingSenderId: "767787175345",
-    appId: "1:767787175345:web:be80a8440832838d96c190",
-    measurementId: "G-W1SV4DKWSJ"
+    apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+    authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.REACT_APP_FIREBASE_APP_ID,
+    measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
