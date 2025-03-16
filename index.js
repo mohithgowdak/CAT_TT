@@ -63,13 +63,30 @@ document.addEventListener("DOMContentLoaded", async function () {
         { id: "scheduleTable2", schedule: schedule2, weeks: 13, hasTask3: false }
     ];
 
-    async function loadProgress() {
-        if (!userId) return;
-        const docRef = doc(db, "progress", userId);
-        const docSnap = await getDoc(docRef);
-        return docSnap.exists() ? docSnap.data() : {};
-    }
+    let cachedProgress = {};
 
+async function loadProgress() {
+    if (!userId) return;
+    const docRef = doc(db, "progress", userId);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) return;
+
+    cachedProgress = docSnap.data();
+
+    tables.forEach(({ id, schedule, weeks }) => {
+        for (let week = 1; week <= weeks; week++) {
+            for (let index = 0; index < schedule.length; index++) {
+                const checkbox = document.getElementById(`week${week}day${index}_${id}`);
+                if (checkbox && cachedProgress[id] && cachedProgress[id][week] && cachedProgress[id][week][index]) {
+                    checkbox.checked = cachedProgress[id][week][index]; // Update checkbox state
+                }
+            }
+        }
+    });
+
+    updateCompletionPercentage();
+}
     async function saveProgress(tableId, week, dayIndex, value) {
         if (!userId) return;
         const progressData = await loadProgress();
@@ -151,3 +168,5 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 });
+
+
