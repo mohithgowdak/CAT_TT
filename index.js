@@ -1,6 +1,7 @@
-/*import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-
+import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+import { signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 // Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyD_KX75jv1sX0JkGRWZjjstSLVzJ04m-Ys",
@@ -15,8 +16,75 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+let userId = null;
 
 document.addEventListener("DOMContentLoaded", async function () {
+    const loginButton = document.createElement("button");
+    loginButton.textContent = "Login with Google";
+    loginButton.classList.add("login-btn");
+    document.body.prepend(loginButton);
+
+    // 🔹 ADD THIS: Create the Logout button
+    const logoutButton = document.createElement("button");
+    logoutButton.textContent = "Logout";
+    logoutButton.classList.add("logout-btn");
+    document.body.prepend(logoutButton);
+
+    logoutButton.addEventListener("click", logout);
+
+
+    loginButton.addEventListener("click", async () => {
+        try {
+            const result = await signInWithPopup(auth, provider);
+            userId = result.user.uid; // Set userId again on login
+    
+            console.log("User ID:", userId); // Debugging
+    
+            alert(`Welcome, ${result.user.displayName}`);
+    
+            // Show logout button, hide login button
+            loginButton.style.display = "none";
+            logoutButton.style.display = "block";
+    
+            loadProgress();  // Reload progress after login
+        } catch (error) {
+            console.error("Login Failed", error);
+        }
+    });
+
+    // 🔹 ADD THIS: Logout Function
+    
+    async function logout() {
+        await auth.signOut(); // Sign out the user
+        userId = null; // Clear the stored user ID
+        cachedProgress = {}; // Reset progress cache
+    
+        // Uncheck all checkboxes
+        document.querySelectorAll("input[type='checkbox']").forEach((checkbox) => {
+            checkbox.checked = false;
+        });
+    
+        document.getElementById("completionPercentage").textContent = "Completion: 0%";
+    
+        alert("Logged out successfully!");
+    }
+    
+    // 🔹 Automatically Handle UI When User Logs In/Out
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            userId = user.uid;
+            loginButton.style.display = "none";
+            logoutButton.style.display = "block";
+            loadProgress();
+        } else {
+            loginButton.style.display = "block";
+            logoutButton.style.display = "none";
+        }
+    });
+
     const schedule1 = [
         ["Monday", "3 RCs + Para jumbles", "DI Set + Logical Puzzle", "Arithmetic + Algebra"],
         ["Tuesday", "3 RCs + Summary Questions", "LR Set + Caselet", "Geometry + Number System"],
@@ -42,182 +110,52 @@ document.addEventListener("DOMContentLoaded", async function () {
         { id: "scheduleTable2", schedule: schedule2, weeks: 13, hasTask3: false }
     ];
 
+    let cachedProgress = {};
+
     async function loadProgress() {
-        const docRef = doc(db, "progress", "phase1DailyProgress");
+        if (!userId) return;
+    
+        const docRef = doc(db, "progress", userId);
         const docSnap = await getDoc(docRef);
-        return docSnap.exists() ? docSnap.data() : {};
-    }
-
-    async function saveProgress(tableId, week, dayIndex, value) {
-        const progressData = await loadProgress();
-        if (!progressData[tableId]) progressData[tableId] = {};
-        if (!progressData[tableId][week]) progressData[tableId][week] = {};
-        progressData[tableId][week][dayIndex] = value;
-        await setDoc(doc(db, "progress", "phase1DailyProgress"), progressData);
-    }
-
-    const progressData = await loadProgress();
-
-    tables.forEach(({ id, schedule, weeks, hasTask3 }) => {
-        const table = document.getElementById(id);
-        table.innerHTML = ""; // Clear table before inserting
-
-        // Create table header
-        const thead = document.createElement("thead");
-        const headerRow = document.createElement("tr");
-        headerRow.innerHTML = hasTask3 ? `<th>Day</th><th>Task 1</th><th>Task 2</th><th>Task 3</th>` : `<th>Day</th><th>Task 1</th><th>Task 2</th>`;
-
-        for (let week = 1; week <= weeks; week++) {
-            let th = document.createElement("th");
-            let checkAll = document.createElement("input");
-            checkAll.type = "checkbox";
-            checkAll.id = `checkAllWeek${week}_${id}`;
-            checkAll.addEventListener("change", function () {
-                toggleWeek(id, week, checkAll.checked);
-            });
-            th.appendChild(checkAll);
-            headerRow.appendChild(th);
-        }
-
-        thead.appendChild(headerRow);
-        table.appendChild(thead);
-
-        // Create table body
-        const tbody = document.createElement("tbody");
-
-        schedule.forEach((daySchedule, index) => {
-            let row = document.createElement("tr");
-            daySchedule.slice(0, hasTask3 ? 4 : 3).forEach((item) => {
-                let cell = document.createElement("td");
-                cell.textContent = item;
-                row.appendChild(cell);
-            });
-
-            for (let week = 1; week <= weeks; week++) {
-                let checkCell = document.createElement("td");
-                let checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.id = `week${week}day${index}_${id}`;
-                checkbox.checked = progressData[id]?.[week]?.[index] || false;
-
-                checkbox.addEventListener("change", async function () {
-                    await saveProgress(id, week, index, checkbox.checked);
-                    updateCompletionPercentage();
-                    checkAllUpdate(id, week);
-                });
-
-                checkCell.appendChild(checkbox);
-                row.appendChild(checkCell);
-            }
-            tbody.appendChild(row);
-        });
-
-        table.appendChild(tbody);
-    });
-
-    function toggleWeek(tableId, week, state) {
-        const scheduleLength = tables.find((t) => t.id === tableId).schedule.length;
-        for (let index = 0; index < scheduleLength; index++) {
-            let checkbox = document.getElementById(`week${week}day${index}_${tableId}`);
-            if (checkbox) {
-                checkbox.checked = state;
-                saveProgress(tableId, week, index, state);
-            }
-        }
-        updateCompletionPercentage();
-    }
-
-    function checkAllUpdate(tableId, week) {
-        const scheduleLength = tables.find((t) => t.id === tableId).schedule.length;
-        let allChecked = true;
-        for (let index = 0; index < scheduleLength; index++) {
-            if (!document.getElementById(`week${week}day${index}_${tableId}`).checked) {
-                allChecked = false;
-                break;
-            }
-        }
-        document.getElementById(`checkAllWeek${week}_${tableId}`).checked = allChecked;
-    }
-
-    function updateCompletionPercentage() {
-        let total = tables.reduce((sum, { schedule, weeks }) => sum + weeks * schedule.length, 0);
-        let completed = 0;
-
+    
+        cachedProgress = docSnap.exists() ? docSnap.data() : {}; // Ensure object
+    
         tables.forEach(({ id, schedule, weeks }) => {
             for (let week = 1; week <= weeks; week++) {
                 for (let index = 0; index < schedule.length; index++) {
-                    if (document.getElementById(`week${week}day${index}_${id}`).checked) {
-                        completed++;
+                    const checkbox = document.getElementById(`week${week}day${index}_${id}`);
+                    if (checkbox && cachedProgress[id] && cachedProgress[id][week]) {
+                        checkbox.checked = cachedProgress[id][week][index] || false; // Ensure false if undefined
                     }
                 }
             }
         });
-
-        let percentage = ((completed / total) * 100).toFixed(2);
-        document.getElementById("completionPercentage").textContent = `Completion: ${percentage}%`;
+    
+        updateCompletionPercentage();
     }
-
-    updateCompletionPercentage();
-});*/
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-
-// Firebase Config
-const firebaseConfig = {
-    apiKey: "AIzaSyD_KX75jv1sX0JkGRWZjjstSLVzJ04m-Ys",
-    authDomain: "golden-context-416014.firebaseapp.com",
-    projectId: "golden-context-416014",
-    storageBucket: "golden-context-416014.firebasestorage.app",
-    messagingSenderId: "767787175345",
-    appId: "1:767787175345:web:be80a8440832838d96c190",
-    measurementId: "G-W1SV4DKWSJ"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-document.addEventListener("DOMContentLoaded", async function () {
-    const schedule1 = [
-        ["Monday", "3 RCs + Para jumbles", "DI Set + Logical Puzzle", "Arithmetic + Algebra"],
-        ["Tuesday", "3 RCs + Summary Questions", "LR Set + Caselet", "Geometry + Number System"],
-        ["Wednesday", "3 RCs + Odd-One-Out", "DI Set + Arrangements", "Arithmetic + Algebra"],
-        ["Thursday", "3 RCs + Grammar", "LR Set + Games & Tournaments", "Geometry + Functions"],
-        ["Friday", "3 RCs + Para jumbles", "DI Set + Venn Diagrams", "Arithmetic + Algebra"],
-        ["Saturday", "Sectional Mock (VARC)", "Sectional Mock (DILR)", "Sectional Mock (QA)"],
-        ["Sunday", "Full-Length Mock", "Full-Length Mock", "Revision + Weak Areas"]
-    ];
-
-    const schedule2 = [
-        ["Monday", "Advanced DILR Set", "50+ QA Questions"],
-        ["Tuesday", "Mocks", "Mock Analysis"],
-        ["Wednesday", "Advanced DILR Set", "50+ QA Questions"],
-        ["Thursday", "Mocks", "Mock Analysis"],
-        ["Friday", "Advanced DILR Set", "50+ QA Questions"],
-        ["Saturday", "Full-Length Mock", "Detailed Mock Analysis"],
-        ["Sunday", "Full-Length Mock", "Mock Review + Weak Areas"]
-    ];
-
-    const tables = [
-        { id: "scheduleTable", schedule: schedule1, weeks: 18, hasTask3: true },
-        { id: "scheduleTable2", schedule: schedule2, weeks: 13, hasTask3: false }
-    ];
-
-    async function loadProgress() {
-        const docRef = doc(db, "progress", "phase1DailyProgress");
-        const docSnap = await getDoc(docRef);
-        return docSnap.exists() ? docSnap.data() : {};
-    }
-
+    
     async function saveProgress(tableId, week, dayIndex, value) {
-        const progressData = await loadProgress();
+        if (!userId) return;
+        
+        // Get the latest progress data from Firestore
+        const docRef = doc(db, "progress", userId);
+        const docSnap = await getDoc(docRef);
+        
+        let progressData = docSnap.exists() ? docSnap.data() : {}; // Ensure object
+    
+        // Ensure the necessary structure exists
         if (!progressData[tableId]) progressData[tableId] = {};
         if (!progressData[tableId][week]) progressData[tableId][week] = {};
+        
+        // Save the progress
         progressData[tableId][week][dayIndex] = value;
-        await setDoc(doc(db, "progress", "phase1DailyProgress"), progressData);
+    
+        // Update Firestore
+        await setDoc(docRef, progressData);
+    
+        console.log(`Saved: ${tableId} - Week ${week} - Day ${dayIndex} - ${value}`);
     }
-
-    const progressData = await loadProgress();
+    
 
     tables.forEach(({ id, schedule, weeks, hasTask3 }) => {
         const table = document.getElementById(id);
@@ -253,14 +191,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                 let checkbox = document.createElement("input");
                 checkbox.type = "checkbox";
                 checkbox.id = `week${week}day${index}_${id}`;
-                checkbox.checked = progressData[id]?.[week]?.[index] || false;
-
                 checkbox.addEventListener("change", async function () {
                     await saveProgress(id, week, index, checkbox.checked);
                     updateCompletionPercentage();
-                    checkAllUpdate(id, week);
                 });
-
                 checkCell.appendChild(checkbox);
                 row.appendChild(checkCell);
             }
@@ -288,9 +222,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.getElementById("completionPercentage").textContent = `Completion: ${percentage}%`;
     }
 
-    updateCompletionPercentage();
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            userId = user.uid;
+            loadProgress();
+        }
+    });
 });
-
 function updateDaysLeft() {
     const targetDate = new Date("2025-11-30");
     const today = new Date();
@@ -302,3 +240,5 @@ function updateDaysLeft() {
 
 // Update on page load
 document.addEventListener("DOMContentLoaded", updateDaysLeft);
+
+
