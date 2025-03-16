@@ -55,7 +55,7 @@ ul li {
 /* Table Styling */
 .table-container {
     width: 100%;
-    overflow-x: ; /* Allows horizontal scrolling */
+    overflow-x: scroll; /* Allows horizontal scrolling */
     padding-bottom: 10px;
 }
 
@@ -81,7 +81,13 @@ table th {
 table tr:nth-child(even) {
     background: #2c2c2c;
 }
-
+input[type="checkbox"] {
+    width: 20px; /* Adjust width */
+    height: 20px; /* Adjust height */
+    transform: scale(1.5); /* Increase size */
+    margin-right: 10px; /* Space between checkbox and label */
+    cursor: pointer; /* Makes it easier to click */
+}
 /* Responsive Design */
 @media (max-width: 768px) {
     body {
