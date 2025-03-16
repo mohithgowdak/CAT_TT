@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-
+import { signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 // Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyD_KX75jv1sX0JkGRWZjjstSLVzJ04m-Ys",
@@ -22,7 +22,7 @@ const provider = new GoogleAuthProvider();
 let userId = null;
 
 document.addEventListener("DOMContentLoaded", async function () {
-    const loginButton = document.createElement("button");
+    /*const loginButton = document.createElement("button");
     loginButton.textContent = "Login with Google";
     loginButton.classList.add("login-btn");
     document.body.prepend(loginButton);
@@ -35,6 +35,68 @@ document.addEventListener("DOMContentLoaded", async function () {
             loadProgress();
         } catch (error) {
             console.error("Login Failed", error);
+        }
+    });*/
+    const loginButton = document.createElement("button");
+    loginButton.textContent = "Login with Google";
+    loginButton.classList.add("login-btn");
+    document.body.prepend(loginButton);
+
+    // 🔹 ADD THIS: Create the Logout button
+    const logoutButton = document.createElement("button");
+    logoutButton.textContent = "Logout";
+    logoutButton.classList.add("logout-btn");
+    document.body.prepend(logoutButton);
+
+    logoutButton.addEventListener("click", logout);
+
+
+    loginButton.addEventListener("click", async () => {
+        try {
+            const result = await signInWithPopup(auth, provider);
+            userId = result.user.uid; // Set userId again on login
+    
+            console.log("User ID:", userId); // Debugging
+    
+            alert(`Welcome, ${result.user.displayName}`);
+    
+            // Show logout button, hide login button
+            loginButton.style.display = "none";
+            logoutButton.style.display = "block";
+    
+            loadProgress();  // Reload progress after login
+        } catch (error) {
+            console.error("Login Failed", error);
+        }
+    });
+
+    // 🔹 ADD THIS: Logout Function
+    
+    async function logout() {
+        await auth.signOut(); // Sign out the user
+        userId = null; // Clear the stored user ID
+        cachedProgress = {}; // Reset progress cache
+    
+        // Uncheck all checkboxes
+        document.querySelectorAll("input[type='checkbox']").forEach((checkbox) => {
+            checkbox.checked = false;
+        });
+    
+        document.getElementById("completionPercentage").textContent = "Completion: 0%";
+    
+        alert("Logged out successfully!");
+    }
+    
+    // 🔹 Automatically Handle UI When User Logs In/Out
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            userId = user.uid;
+            loginButton.style.display = "none";
+            logoutButton.style.display = "block";
+            loadProgress();
+        } else {
+            loginButton.style.display = "block";
+            logoutButton.style.display = "none";
         }
     });
 
@@ -65,36 +127,50 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     let cachedProgress = {};
 
-async function loadProgress() {
-    if (!userId) return;
-    const docRef = doc(db, "progress", userId);
-    const docSnap = await getDoc(docRef);
-
-    if (!docSnap.exists()) return;
-
-    cachedProgress = docSnap.data();
-
-    tables.forEach(({ id, schedule, weeks }) => {
-        for (let week = 1; week <= weeks; week++) {
-            for (let index = 0; index < schedule.length; index++) {
-                const checkbox = document.getElementById(`week${week}day${index}_${id}`);
-                if (checkbox && cachedProgress[id] && cachedProgress[id][week] && cachedProgress[id][week][index]) {
-                    checkbox.checked = cachedProgress[id][week][index]; // Update checkbox state
+    async function loadProgress() {
+        if (!userId) return;
+    
+        const docRef = doc(db, "progress", userId);
+        const docSnap = await getDoc(docRef);
+    
+        cachedProgress = docSnap.exists() ? docSnap.data() : {}; // Ensure object
+    
+        tables.forEach(({ id, schedule, weeks }) => {
+            for (let week = 1; week <= weeks; week++) {
+                for (let index = 0; index < schedule.length; index++) {
+                    const checkbox = document.getElementById(`week${week}day${index}_${id}`);
+                    if (checkbox && cachedProgress[id] && cachedProgress[id][week]) {
+                        checkbox.checked = cachedProgress[id][week][index] || false; // Ensure false if undefined
+                    }
                 }
             }
-        }
-    });
-
-    updateCompletionPercentage();
-}
+        });
+    
+        updateCompletionPercentage();
+    }
+    
     async function saveProgress(tableId, week, dayIndex, value) {
         if (!userId) return;
-        const progressData = await loadProgress();
+        
+        // Get the latest progress data from Firestore
+        const docRef = doc(db, "progress", userId);
+        const docSnap = await getDoc(docRef);
+        
+        let progressData = docSnap.exists() ? docSnap.data() : {}; // Ensure object
+    
+        // Ensure the necessary structure exists
         if (!progressData[tableId]) progressData[tableId] = {};
         if (!progressData[tableId][week]) progressData[tableId][week] = {};
+        
+        // Save the progress
         progressData[tableId][week][dayIndex] = value;
-        await setDoc(doc(db, "progress", userId), progressData);
+    
+        // Update Firestore
+        await setDoc(docRef, progressData);
+    
+        console.log(`Saved: ${tableId} - Week ${week} - Day ${dayIndex} - ${value}`);
     }
+    
 
     tables.forEach(({ id, schedule, weeks, hasTask3 }) => {
         const table = document.getElementById(id);
@@ -168,5 +244,16 @@ async function loadProgress() {
         }
     });
 });
+function updateDaysLeft() {
+    const targetDate = new Date("2025-11-30");
+    const today = new Date();
+    const timeDiff = targetDate - today;
+    const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+    document.getElementById("daysLeft").textContent = `Days Left: ${daysLeft}`;
+}
+
+// Update on page load
+document.addEventListener("DOMContentLoaded", updateDaysLeft);
 
 
