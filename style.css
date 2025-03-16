@@ -15,11 +15,18 @@ body {
     line-height: 1.6;
     padding: 20px;
     overflow-y: auto; /* Enables vertical scrolling */
+    overflow-x: hidden; /* Prevents horizontal scrolling of the entire page */
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+    -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
+}
+
+body::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for Chrome, Safari, and Opera */
 }
 
 .container {
-    max-width: 100%;
-    margin: auto;
+    max-width: 1200px; /* Limit container width for larger screens */
+    margin: 0 auto; /* Center the container */
     background: #1e1e1e;
     padding: 20px;
     border-radius: 10px;
@@ -31,6 +38,18 @@ h1, h2, h3 {
     color: #f1c40f;
     text-align: center;
     margin-bottom: 15px;
+}
+
+h1 {
+    font-size: 2rem; /* Larger font size for main heading */
+}
+
+h2 {
+    font-size: 1.75rem;
+}
+
+h3 {
+    font-size: 1.5rem;
 }
 
 /* List Styles */
@@ -54,14 +73,34 @@ ul li {
 
 /* Table Styling */
 .table-container {
-    width: 100%;
-    overflow-x: scroll; /* Allows horizontal scrolling */
+    width: 100%; /* Ensure the container takes up the full width */
+    overflow-x: auto; /* Allows horizontal scrolling */
     padding-bottom: 10px;
+    margin-bottom: 20px; /* Add some spacing between tables */
+}
+
+/* Scrollbar Styling for Table Containers */
+.table-container::-webkit-scrollbar {
+    height: 8px; /* Height of the horizontal scrollbar */
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #1e1e1e; /* Track color */
+    border-radius: 10px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: #000000; /* Thumb (scrollbar handle) color */
+    border-radius: 10px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: #333333; /* Thumb color on hover */
 }
 
 table {
     width: 100%;
-    min-width: 900px; /* Prevents table from shrinking too much */
+    min-width: 600px; /* Prevents table from shrinking too much */
     border-collapse: collapse;
     margin-top: 20px;
 }
@@ -81,6 +120,7 @@ table th {
 table tr:nth-child(even) {
     background: #2c2c2c;
 }
+
 input[type="checkbox"] {
     width: 20px; /* Adjust width */
     height: 20px; /* Adjust height */
@@ -88,6 +128,7 @@ input[type="checkbox"] {
     margin-right: 10px; /* Space between checkbox and label */
     cursor: pointer; /* Makes it easier to click */
 }
+
 /* Responsive Design */
 @media (max-width: 768px) {
     body {
@@ -98,16 +139,50 @@ input[type="checkbox"] {
         padding: 15px;
     }
 
-    .table-container {
-        overflow-x: scroll; /* Keeps horizontal scrolling for table */
+    h1 {
+        font-size: 1.75rem; /* Smaller font size for smaller screens */
     }
 
-    table {
-        width: max-content; /* Ensures table does not shrink too much */
+    h2 {
+        font-size: 1.5rem;
     }
 
-    table, th, td {
-        font-size: 14px;
-        padding: 8px;
+    h3 {
+        font-size: 1.25rem;
+    }
+
+    table th, table td {
+        padding: 8px; /* Smaller padding for table cells */
+    }
+
+    input[type="checkbox"] {
+        transform: scale(1.2); /* Slightly smaller checkbox */
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.5rem; /* Even smaller font size for phones */
+    }
+
+    h2 {
+        font-size: 1.25rem;
+    }
+
+    h3 {
+        font-size: 1rem;
+    }
+
+    ul li {
+        padding: 8px; /* Smaller padding for list items */
+    }
+
+    table th, table td {
+        padding: 6px; /* Even smaller padding for table cells */
+        font-size: 14px; /* Smaller font size for table content */
+    }
+
+    input[type="checkbox"] {
+        transform: scale(1); /* Default size for checkboxes */
     }
 }
