@@ -1,67 +1,107 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
+    background: #121212;
+    color: #ffffff;
+    line-height: 1.6;
     padding: 20px;
-    background-color: #f4f4f4;
+    overflow-y: auto; /* Enables vertical scrolling */
 }
 
 .container {
     max-width: 100%;
     margin: auto;
-    background: white;
+    background: #1e1e1e;
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    overflow-x: auto;
+    box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
 }
 
-h2, h3 {
-    color: #333;
+/* Headings */
+h1, h2, h3 {
+    color: #f1c40f;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+/* List Styles */
+ul {
+    list-style: none;
+    padding: 10px;
+}
+
+ul li {
+    background: #2c2c2c;
+    margin: 8px 0;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+#completionPercentage {
+    font-weight: bold;
+    text-align: center;
+    color: #27ae60;
+}
+
+/* Table Styling */
+.table-container {
+    width: 100%;
+    overflow-x: ; /* Allows horizontal scrolling */
+    padding-bottom: 10px;
 }
 
 table {
     width: 100%;
+    min-width: 900px; /* Prevents table from shrinking too much */
     border-collapse: collapse;
     margin-top: 20px;
-    white-space: nowrap;
 }
 
-th, td {
-    border: 1px solid #ddd;
-    padding: 10px;
+table th, table td {
+    padding: 12px;
     text-align: center;
+    border-bottom: 1px solid #333;
+    white-space: nowrap; /* Prevents text wrapping */
 }
 
-th {
-    background-color: #f8f8f8;
+table th {
+    background: #f39c12;
+    color: #000;
 }
 
-input[type="checkbox"] {
-    transform: scale(1.2);
-}
-.slide-panel {
-    position: fixed;
-    right: -100%;
-    top: 0;
-    width: 40%;
-    height: 100%;
-    background: white;
-    box-shadow: -2px 0px 5px rgba(0, 0, 0, 0.2);
-    transition: right 0.5s ease-in-out;
+table tr:nth-child(even) {
+    background: #2c2c2c;
 }
 
-.slide-panel iframe {
-    width: 100%;
-    height: 90%;
-}
+/* Responsive Design */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
 
-#closePanel {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background: red;
-    color: white;
-    border: none;
-    padding: 5px;
-    cursor: pointer;
+    .container {
+        padding: 15px;
+    }
+
+    .table-container {
+        overflow-x: scroll; /* Keeps horizontal scrolling for table */
+    }
+
+    table {
+        width: max-content; /* Ensures table does not shrink too much */
+    }
+
+    table, th, td {
+        font-size: 14px;
+        padding: 8px;
+    }
 }

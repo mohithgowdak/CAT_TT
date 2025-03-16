@@ -22,21 +22,6 @@ const provider = new GoogleAuthProvider();
 let userId = null;
 
 document.addEventListener("DOMContentLoaded", async function () {
-    /*const loginButton = document.createElement("button");
-    loginButton.textContent = "Login with Google";
-    loginButton.classList.add("login-btn");
-    document.body.prepend(loginButton);
-
-    loginButton.addEventListener("click", async () => {
-        try {
-            const result = await signInWithPopup(auth, provider);
-            userId = result.user.uid;
-            alert(`Welcome, ${result.user.displayName}`);
-            loadProgress();
-        } catch (error) {
-            console.error("Login Failed", error);
-        }
-    });*/
     const loginButton = document.createElement("button");
     loginButton.textContent = "Login with Google";
     loginButton.classList.add("login-btn");
